@@ -9,6 +9,18 @@ orden_llegada = threading.Semaphore()
 sem_db = threading.Semaphore()
 mutex_cont_lectores = threading.Lock()
 cont_lectores = 0
+process_in_execution = []
+finished_process = []
+ready_to_execute = {
+        0: [Proceso.Proceso('lector1', 'lector', 0, 2), Proceso.Proceso('lector2', 'lector', 0, 2)],
+        1: [Proceso.Proceso('lector3', 'lector', 1, 2)],
+        2: [Proceso.Proceso('lector4', 'lector', 2, 2)],
+        3: [Proceso.Proceso('escritor1', 'escritor', 3, 4)],
+        4: [Proceso.Proceso('lector5', 'lector', 4, 2)],
+        5: [Proceso.Proceso('escritor2', 'escritor', 5, 1)]
+    }
+writers = 0
+readers = 0
 
 
 def ejecutar_lector(proceso, i):
@@ -44,49 +56,81 @@ def ejecutar_escritor(proceso, i):
     sem_db.release()
 
 def get_planification_queue():
-    procesos = [Proceso.Proceso('lector1', 'lector', 2, 2),
-                Proceso.Proceso('lector2', 'lector', 2, 5),
-                Proceso.Proceso('escritor1', 'escritor', 3, 4),
-                Proceso.Proceso('lector3', 'lector', 6, 2),
-                Proceso.Proceso('escritor2', 'escritor', 8, 1)]
-    return procesos
+    all_process = []
+    for time in ready_to_execute:
+        all_process.extend(ready_to_execute[time])
+    return all_process
 
 def get_finished_process_list():
-    procesos = [Proceso.Proceso('lector1', 'lector', 2, 2),
+    finished_process = [Proceso.Proceso('lector1', 'lector', 2, 2),
                 Proceso.Proceso('lector2', 'lector', 2, 5),
                 Proceso.Proceso('escritor1', 'escritor', 3, 4),
                 Proceso.Proceso('lector3', 'lector', 6, 2),
                 Proceso.Proceso('escritor2', 'escritor', 8, 1)]
-    return procesos
+    return finished_process
+
+def add_process_to_queue(tipo_proceso, tiempo_llegada, tiempo_ejecucion):
+    global readers
+    global writers
+    new_process = Proceso.Proceso('', tipo_proceso, tiempo_llegada, tiempo_ejecucion)
+    if new_process.es_lector():
+        readers += 1
+        new_process.nombre_proceso = 'lector {}'.format(readers)
+    if new_process.es_escritor():
+        writers += 1
+        new_process.nombre_proceso = 'escritor {}'.format(writers)
+    ready_to_execute[tiempo_llegada] = ready_to_execute.get(tiempo_llegada, [])
+    ready_to_execute[tiempo_llegada].append(new_process)
+    analize_start()
+
+def analize_start():
+    global readers
+    global writers
+    if writers == 0 and readers == 1:
+        start_simulation()
+    if readers == 0 and writers == 1:
+        start_simulation()
 
 
-try:
-    # TODO Carga de prueba. Se leerá de un archivo e irá appendeando
-    procesos = [Proceso.Proceso('lector1', 'lector', 2, 2),
-                Proceso.Proceso('lector2', 'lector', 2, 5),
-                Proceso.Proceso('escritor1', 'escritor', 3, 4),
-                Proceso.Proceso('lector3', 'lector', 6, 2),
-                Proceso.Proceso('escritor2', 'escritor', 8, 1)]
-    max_tiempo_llegada = 8
+def load_from_csv():
+    ''''''
+    #TODO: Carga desde csv
 
-    rindex = 1
-    windex = 1
-    for i in range(max_tiempo_llegada + 1):
-        print("---------- INSTANTE DE TIEMPO: " + str(i) + " ----------")
-        time.sleep(2)
-        for proceso in procesos:
-            if proceso.tiempo_llegada == i:
-                if proceso.es_lector():
-                    t = threading.Thread(target=ejecutar_lector, args=(proceso, rindex,))
-                    rindex += 1
-                    t.start()
-                else:
-                    t = threading.Thread(target=ejecutar_escritor, args=(proceso, windex,))
-                    windex += 1
-                    t.start()
-except:
-    print(str(traceback.format_exc()))
-    print("Error: unable to start thread")
+def download_finished_process():
+    ''''''
+    # TODO: Descargar como csv
+
+def start_simulation():
+    ''''''
+    # TODO: implementar el try catch aca
+
+# try:
+#     # TODO Carga de prueba. Se leerá de un archivo e irá appendeando
+#     procesos = [Proceso.Proceso('lector1', 'lector', 2, 2),
+#                 Proceso.Proceso('lector2', 'lector', 2, 5),
+#                 Proceso.Proceso('escritor1', 'escritor', 3, 4),
+#                 Proceso.Proceso('lector3', 'lector', 6, 2),
+#                 Proceso.Proceso('escritor2', 'escritor', 8, 1)]
+#     max_tiempo_llegada = 8
+#
+#     rindex = 1
+#     windex = 1
+#     for i in range(max_tiempo_llegada + 1):
+#         print("---------- INSTANTE DE TIEMPO: " + str(i) + " ----------")
+#         time.sleep(2)
+#         for proceso in procesos:
+#             if proceso.tiempo_llegada == i:
+#                 if proceso.es_lector():
+#                     t = threading.Thread(target=ejecutar_lector, args=(proceso, rindex,))
+#                     rindex += 1
+#                     t.start()
+#                 else:
+#                     t = threading.Thread(target=ejecutar_escritor, args=(proceso, windex,))
+#                     windex += 1
+#                     t.start()
+# except:
+#     print(str(traceback.format_exc()))
+#     print("Error: unable to start thread")
 
 # lector1 = Proceso.Proceso('lector', 0, 5)
 # escritor1 = Proceso.Proceso('escritor', 1, 2)

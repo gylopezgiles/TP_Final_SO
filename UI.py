@@ -29,23 +29,42 @@ class ReadersWritersUI(tk.Tk):
         self.destroy()
 
     def show_frame(self, page_name):
+        for frame in self.frames.values():
+            frame.grid_remove()
         frame = self.frames[page_name]
-        frame.tkraise()
+        frame.grid()
 
-    def start_without_process(self, page_name):
-        self.show_frame(page_name)
+    def start_with_process(self):
+        lectores_escritores.load_from_csv()
+        self.start_without_process()
 
-    def start_with_process(self, page_name):
-        self.show_frame(page_name)
+    def start_without_process(self):
+        self.show_frame("StartSimulation")
 
     def add_process(self, process_type, arrival_time, execution_time):
-        print(process_type)
-        print(arrival_time)
-        print(execution_time)
+        lectores_escritores.add_process_to_queue(process_type, arrival_time, execution_time)
         self.show_frame("StartSimulation")
 
     def download_final_table(self):
-        print("deacargar tabla")
+        lectores_escritores.download_finished_process()
+
+    def refresh(self):
+        self.destroy()
+        self.__init__()
+
+    def see_queue_page(self):
+        self.refresh()
+        self.show_frame("SeeQueuePage")
+
+    def finish_simulation_page(self):
+        self.refresh()
+        self.show_frame("FinishSimulationPage")
+
+    def finish_simulation_page(self):
+        self.refresh()
+        self.show_frame("FinishSimulationPage")
+
+
 
 class StartPage(tk.Frame):
 
@@ -54,9 +73,9 @@ class StartPage(tk.Frame):
         self.controller = controller
 
         button1 = tk.Button(self, text="Empezar simulacion sin procesos precargados",
-                            command=lambda: controller.start_without_process("StartSimulation"))
+                            command=lambda: controller.start_without_process())
         button2 = tk.Button(self, text="Empezar simulacion con procesos precargados",
-                            command=lambda: controller.start_with_process("StartSimulation"))
+                            command=lambda: controller.start_with_process())
         button1.pack()
         button2.pack()
 
