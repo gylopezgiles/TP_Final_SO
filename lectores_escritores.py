@@ -43,11 +43,30 @@ def ejecutar_escritor(proceso, i):
 
     sem_db.release()
 
+def get_planification_queue():
+    procesos = [Proceso.Proceso('lector1', 'lector', 2, 2),
+                Proceso.Proceso('lector2', 'lector', 2, 5),
+                Proceso.Proceso('escritor1', 'escritor', 3, 4),
+                Proceso.Proceso('lector3', 'lector', 6, 2),
+                Proceso.Proceso('escritor2', 'escritor', 8, 1)]
+    return procesos
+
+def get_finished_process_list():
+    procesos = [Proceso.Proceso('lector1', 'lector', 2, 2),
+                Proceso.Proceso('lector2', 'lector', 2, 5),
+                Proceso.Proceso('escritor1', 'escritor', 3, 4),
+                Proceso.Proceso('lector3', 'lector', 6, 2),
+                Proceso.Proceso('escritor2', 'escritor', 8, 1)]
+    return procesos
+
 
 try:
     # TODO Carga de prueba. Se leerá de un archivo e irá appendeando
-    procesos = [Proceso.Proceso('lector', 2, 2), Proceso.Proceso('lector', 2, 5), Proceso.Proceso('escritor', 3, 4),
-                Proceso.Proceso('lector', 6, 2), Proceso.Proceso('escritor', 8, 1)]
+    procesos = [Proceso.Proceso('lector1', 'lector', 2, 2),
+                Proceso.Proceso('lector2', 'lector', 2, 5),
+                Proceso.Proceso('escritor1', 'escritor', 3, 4),
+                Proceso.Proceso('lector3', 'lector', 6, 2),
+                Proceso.Proceso('escritor2', 'escritor', 8, 1)]
     max_tiempo_llegada = 8
 
     rindex = 1
