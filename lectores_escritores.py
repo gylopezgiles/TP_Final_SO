@@ -2,9 +2,11 @@ import time
 import threading
 import traceback
 import Proceso
+import csv
 
 global orden_llegada, sem_db, mutex_cont_lectores, cont_lectores, instante
 
+archivo = ''
 orden_llegada = threading.Semaphore()
 sem_db = threading.Semaphore()
 mutex_cont_lectores = threading.Lock()
@@ -12,13 +14,13 @@ cont_lectores = 0
 process_in_execution = []
 finished_process = []
 ready_to_execute = {
-        0: [Proceso.Proceso('lector1', 'lector', 0, 2), Proceso.Proceso('lector2', 'lector', 0, 2)],
-        1: [Proceso.Proceso('lector3', 'lector', 1, 2)],
-        2: [Proceso.Proceso('lector4', 'lector', 2, 2)],
-        3: [Proceso.Proceso('escritor1', 'escritor', 3, 4)],
-        4: [Proceso.Proceso('lector5', 'lector', 4, 2)],
-        5: [Proceso.Proceso('escritor2', 'escritor', 5, 1)]
-    }
+    0: [Proceso.Proceso('lector1', 'lector', 0, 2), Proceso.Proceso('lector2', 'lector', 0, 2)],
+    1: [Proceso.Proceso('lector3', 'lector', 1, 2)],
+    2: [Proceso.Proceso('lector4', 'lector', 2, 2)],
+    3: [Proceso.Proceso('escritor1', 'escritor', 3, 4)],
+    4: [Proceso.Proceso('lector5', 'lector', 4, 2)],
+    5: [Proceso.Proceso('escritor2', 'escritor', 5, 1)]
+}
 writers = 0
 readers = 0
 
@@ -55,24 +57,39 @@ def ejecutar_escritor(proceso, i):
 
     sem_db.release()
 
+
 def get_planification_queue():
     all_process = []
     for time in ready_to_execute:
         all_process.extend(ready_to_execute[time])
     return all_process
 
+
 def get_finished_process_list():
     finished_process = [Proceso.Proceso('lector1', 'lector', 2, 2),
-                Proceso.Proceso('lector2', 'lector', 2, 5),
-                Proceso.Proceso('escritor1', 'escritor', 3, 4),
-                Proceso.Proceso('lector3', 'lector', 6, 2),
-                Proceso.Proceso('escritor2', 'escritor', 8, 1)]
+                        Proceso.Proceso('lector2', 'lector', 2, 5),
+                        Proceso.Proceso('escritor1', 'escritor', 3, 4),
+                        Proceso.Proceso('lector3', 'lector', 6, 2),
+                        Proceso.Proceso('escritor2', 'escritor', 8, 1)]
     return finished_process
+
+
+def leer_archivo():
+    with open(archivo, mode='r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            tipo_proceso = row[0]
+            tiempo_llegada = row[1]
+            tiempo_ejecucion = row[2]
+            add_process_to_queue(
+                tipo_proceso, tiempo_llegada, tiempo_ejecucion)
+
 
 def add_process_to_queue(tipo_proceso, tiempo_llegada, tiempo_ejecucion):
     global readers
     global writers
-    new_process = Proceso.Proceso('', tipo_proceso, tiempo_llegada, tiempo_ejecucion)
+    new_process = Proceso.Proceso(
+        '', tipo_proceso, tiempo_llegada, tiempo_ejecucion)
     if new_process.es_lector():
         readers += 1
         new_process.nombre_proceso = 'lector {}'.format(readers)
@@ -82,6 +99,7 @@ def add_process_to_queue(tipo_proceso, tiempo_llegada, tiempo_ejecucion):
     ready_to_execute[tiempo_llegada] = ready_to_execute.get(tiempo_llegada, [])
     ready_to_execute[tiempo_llegada].append(new_process)
     analize_start()
+
 
 def analize_start():
     global readers
@@ -94,11 +112,13 @@ def analize_start():
 
 def load_from_csv():
     ''''''
-    #TODO: Carga desde csv
+    # TODO: Carga desde csv
+
 
 def download_finished_process():
     ''''''
     # TODO: Descargar como csv
+
 
 def start_simulation():
     ''''''
