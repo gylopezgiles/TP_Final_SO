@@ -3,6 +3,7 @@ from tkinter import font as tkfont
 from tkinter import ttk
 import lectores_escritores
 
+
 class ReadersWritersUI(tk.Tk):
 
     def __init__(self, *args, **kwargs):
@@ -36,6 +37,7 @@ class ReadersWritersUI(tk.Tk):
 
     def start_with_process(self):
         lectores_escritores.load_from_csv()
+        self.refresh()
         self.start_without_process()
 
     def start_without_process(self):
@@ -43,6 +45,7 @@ class ReadersWritersUI(tk.Tk):
 
     def add_process(self, process_type, arrival_time, execution_time):
         lectores_escritores.add_process_to_queue(process_type, arrival_time, execution_time)
+        self.refresh()
         self.show_frame("StartSimulation")
 
     def download_final_table(self):
@@ -60,10 +63,10 @@ class ReadersWritersUI(tk.Tk):
         self.refresh()
         self.show_frame("FinishSimulationPage")
 
-    def finish_simulation_page(self):
+    def start_simulation(self):
+        lectores_escritores.analize_start()
         self.refresh()
         self.show_frame("FinishSimulationPage")
-
 
 
 class StartPage(tk.Frame):
@@ -76,8 +79,11 @@ class StartPage(tk.Frame):
                             command=lambda: controller.start_without_process())
         button2 = tk.Button(self, text="Empezar simulacion con procesos precargados",
                             command=lambda: controller.start_with_process())
+        button3 = tk.Button(self, text="Salir",
+                            command=lambda: controller.close_window())
         button1.pack()
         button2.pack()
+        button3.pack()
 
 
 class StartSimulation(tk.Frame):
@@ -86,14 +92,20 @@ class StartSimulation(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         see_button = tk.Button(self, text="Ver cola de planificacion",
-                           command=lambda: controller.show_frame("SeeQueuePage"))
+                               command=lambda: controller.show_frame("SeeQueuePage"))
         add_button = tk.Button(self, text="Agregar proceso",
-                           command=lambda: controller.show_frame("AddProcessPage"))
-        finish_button = tk.Button(self, text="Finalizar Simulacion",
-                           command=lambda: controller.show_frame("FinishSimulationPage"))
+                               command=lambda: controller.show_frame("AddProcessPage"))
+        start_button = tk.Button(self, text="Empezar Simulacion",
+                                 command=lambda: controller.start_simulation())
+        finish_button = tk.Button(self, text="Ver tabla final",
+                                  command=lambda: controller.show_frame("FinishSimulationPage"))
+        return_button = tk.Button(self, text="Volver",
+                                  command=lambda: controller.show_frame("StartPage"))
         see_button.pack()
         add_button.pack()
+        start_button.pack()
         finish_button.pack()
+        return_button.pack()
 
 
 class SeeQueuePage(tk.Frame):
@@ -104,19 +116,17 @@ class SeeQueuePage(tk.Frame):
         label = tk.Label(self, text="Cola Planificacion", font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
 
-        data = lectores_escritores.get_planification_queue()
-        tree = ttk.Treeview(self, columns=(1, 2, 3, 4), height=5, show="headings")
+        data = lectores_escritores.get_process_list()
+        tree = ttk.Treeview(self, columns=(1, 2, 3), height=5, show="headings")
         tree.pack()
 
-        tree.heading(1, text="Nombre Proceso")
-        tree.heading(2, text="Tipo Proceso")
-        tree.heading(3, text="Tiempo Llegada")
-        tree.heading(4, text="Tiempo Ejecucion")
+        tree.heading(1, text="Tipo Proceso")
+        tree.heading(2, text="Tiempo Llegada")
+        tree.heading(3, text="Tiempo Ejecucion")
 
-        tree.column(1, width=100)
-        tree.column(2, width=100)
-        tree.column(3, width=100)
-        tree.column(4, width=100)
+        tree.column(1, width=150)
+        tree.column(2, width=150)
+        tree.column(3, width=150)
 
         scroll = ttk.Scrollbar(self, orient="vertical", command=tree.yview)
         scroll.pack(side='right', fill='y')
@@ -124,11 +134,12 @@ class SeeQueuePage(tk.Frame):
         tree.configure(yscrollcommand=scroll.set)
 
         for proceso in data:
-            tree.insert('', 'end', values=(proceso.nombre_proceso, proceso.tipo_proceso,
+            tree.insert('', 'end', values=(proceso.tipo_proceso,
                                            proceso.tiempo_llegada, proceso.tiempo_ejecucion))
         button = tk.Button(self, text="Volver",
                            command=lambda: controller.show_frame("StartSimulation"))
         button.pack()
+
 
 class AddProcessPage(tk.Frame):
 
@@ -148,11 +159,13 @@ class AddProcessPage(tk.Frame):
         execution_time = tk.IntVar(self, 0)
         tk.Entry(self, textvariable=execution_time).pack(anchor=tk.CENTER)
         save_button = tk.Button(self, text="Guardar",
-                           command=lambda: controller.add_process(process_type.get(), arrival_time.get(), execution_time.get()))
+                                command=lambda: controller.add_process(process_type.get(), arrival_time.get(),
+                                                                       execution_time.get()))
         cancel_button = tk.Button(self, text="Cancelar",
-                           command=lambda: controller.show_frame("StartSimulation"))
+                                  command=lambda: controller.show_frame("StartSimulation"))
         save_button.pack()
         cancel_button.pack()
+
 
 class FinishSimulationPage(tk.Frame):
 
@@ -163,24 +176,22 @@ class FinishSimulationPage(tk.Frame):
         label = tk.Label(self, text="Tabla Final", font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
 
-        data = lectores_escritores.get_finished_process_list()
+        data = lectores_escritores.get_process_list()
 
-        tree = ttk.Treeview(self, columns=(1, 2, 3, 4, 5, 6), height=5, show="headings")
+        tree = ttk.Treeview(self, columns=(1, 2, 3, 4, 5), height=5, show="headings")
         tree.pack()
 
-        tree.heading(1, text="Nombre Proceso")
-        tree.heading(2, text="Tipo Proceso")
-        tree.heading(3, text="Tiempo Llegada")
-        tree.heading(4, text="Momento Ejecucion")
-        tree.heading(5, text="Tiempo Ejecucion")
-        tree.heading(6, text="Tiempo Finalizacion")
+        tree.heading(1, text="Tipo Proceso")
+        tree.heading(2, text="Tiempo Llegada")
+        tree.heading(3, text="Momento Ejecucion")
+        tree.heading(4, text="Tiempo Ejecucion")
+        tree.heading(5, text="Tiempo Finalizacion")
 
-        tree.column(1, width=100)
-        tree.column(2, width=100)
-        tree.column(3, width=100)
-        tree.column(4, width=100)
-        tree.column(5, width=100)
-        tree.column(6, width=100)
+        tree.column(1, width=150)
+        tree.column(2, width=150)
+        tree.column(3, width=150)
+        tree.column(4, width=150)
+        tree.column(5, width=150)
 
         scroll = ttk.Scrollbar(self, orient="vertical", command=tree.yview)
         scroll.pack(side='right', fill='y')
@@ -188,18 +199,20 @@ class FinishSimulationPage(tk.Frame):
         tree.configure(yscrollcommand=scroll.set)
 
         for proceso in data:
-            tree.insert('', 'end', values=(proceso.nombre_proceso, proceso.tipo_proceso, proceso.tiempo_llegada,
-                                           proceso.momento_ejecucion, proceso.tiempo_ejecucion, proceso.momento_finalizacion))
+            tree.insert('', 'end', values=(proceso.tipo_proceso, proceso.tiempo_llegada,
+                                           proceso.momento_ejecucion, proceso.tiempo_ejecucion,
+                                           proceso.momento_finalizacion))
 
         download_button = tk.Button(self, text="Descargar CSV",
-                                 command=lambda: controller.download_final_table())
-        start_button = tk.Button(self, text="Empezar de nuevo",
-                           command=lambda: controller.show_frame("StartPage"))
+                                    command=lambda: controller.download_final_table())
+        return_button = tk.Button(self, text="Volver",
+                                  command=lambda: controller.show_frame("StartSimulation"))
         close_button = tk.Button(self, text="Salir",
-                           command=lambda: controller.close_window())
-        start_button.pack()
+                                 command=lambda: controller.close_window())
+        return_button.pack()
         close_button.pack()
         download_button.pack()
+
 
 if __name__ == "__main__":
     app = ReadersWritersUI()
