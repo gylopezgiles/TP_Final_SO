@@ -4,30 +4,20 @@ import traceback
 import Proceso
 import csv
 
-global orden_llegada, sem_db, mutex_cont_lectores, cont_lectores, instante
+global orden_llegada, sem_db, mutex_cont_lectores, cont_lectores, instante, ready_to_execute
 
 archivo = ''
 orden_llegada = threading.Semaphore()
 sem_db = threading.Semaphore()
 mutex_cont_lectores = threading.Lock()
 cont_lectores = 0
-process_in_execution = []
-finished_process = []
-ready_to_execute = {
-    0: [Proceso.Proceso('lector1', 'lector', 0, 2), Proceso.Proceso('lector2', 'lector', 0, 2)],
-    1: [Proceso.Proceso('lector3', 'lector', 1, 2)],
-    2: [Proceso.Proceso('lector4', 'lector', 2, 2)],
-    3: [Proceso.Proceso('escritor1', 'escritor', 3, 4)],
-    4: [Proceso.Proceso('lector5', 'lector', 4, 2)],
-    5: [Proceso.Proceso('escritor2', 'escritor', 5, 1)]
-}
-writers = 0
-readers = 0
+ready_to_execute = {}
+instante = 0
 
 
-def ejecutar_lector(proceso, i):
+def ejecutar_lector(proceso, index):
     global cont_lectores
-    print("Lector " + str(i) + " esperando para leer")
+    print("Lector " + str(index) + " esperando para leer")
     orden_llegada.acquire()
     mutex_cont_lectores.acquire()
     if cont_lectores == 0:
@@ -36,8 +26,8 @@ def ejecutar_lector(proceso, i):
     orden_llegada.release()
     mutex_cont_lectores.release()
 
-    proceso.leer_db(i)
-    print("Lector " + str(i) + " terminó de leer")
+    proceso.leer_db(index, instante)
+    print("Lector " + str(index) + " terminó de leer")
 
     mutex_cont_lectores.acquire()
     cont_lectores -= 1
@@ -46,32 +36,24 @@ def ejecutar_lector(proceso, i):
     mutex_cont_lectores.release()
 
 
-def ejecutar_escritor(proceso, i):
-    print("Escritor " + str(i) + " esperando para escribir")
+def ejecutar_escritor(proceso, index):
+    print("Escritor " + str(index) + " esperando para escribir")
     orden_llegada.acquire()
     sem_db.acquire()
     orden_llegada.release()
 
-    proceso.escribir_db(i)
-    print("Escritor " + str(i) + " terminó de escribir")
+    proceso.escribir_db(index, instante)
+    print("Escritor " + str(index) + " terminó de escribir")
 
     sem_db.release()
 
 
-def get_planification_queue():
+def get_process_list():
+    global ready_to_execute
     all_process = []
     for time in ready_to_execute:
         all_process.extend(ready_to_execute[time])
     return all_process
-
-
-def get_finished_process_list():
-    finished_process = [Proceso.Proceso('lector1', 'lector', 2, 2),
-                        Proceso.Proceso('lector2', 'lector', 2, 5),
-                        Proceso.Proceso('escritor1', 'escritor', 3, 4),
-                        Proceso.Proceso('lector3', 'lector', 6, 2),
-                        Proceso.Proceso('escritor2', 'escritor', 8, 1)]
-    return finished_process
 
 
 def leer_archivo():
@@ -86,33 +68,32 @@ def leer_archivo():
 
 
 def add_process_to_queue(tipo_proceso, tiempo_llegada, tiempo_ejecucion):
-    global readers
-    global writers
-    new_process = Proceso.Proceso(
-        '', tipo_proceso, tiempo_llegada, tiempo_ejecucion)
-    if new_process.es_lector():
-        readers += 1
-        new_process.nombre_proceso = 'lector {}'.format(readers)
-    if new_process.es_escritor():
-        writers += 1
-        new_process.nombre_proceso = 'escritor {}'.format(writers)
+    global ready_to_execute
+    new_process = Proceso.Proceso(tipo_proceso, tiempo_llegada, tiempo_ejecucion)
     ready_to_execute[tiempo_llegada] = ready_to_execute.get(tiempo_llegada, [])
     ready_to_execute[tiempo_llegada].append(new_process)
-    analize_start()
 
 
 def analize_start():
-    global readers
-    global writers
-    if writers == 0 and readers == 1:
+    if len(ready_to_execute):
         start_simulation()
-    if readers == 0 and writers == 1:
-        start_simulation()
+    else:
+        print("Por el momento no hay procesos para simular")
 
 
 def load_from_csv():
-    ''''''
-    # TODO: Carga desde csv
+    global ready_to_execute
+    try:
+        # TODO: Carga desde csv y ordenamiento de menor a mayor por instante de llegada
+        ready_to_execute = {
+            2: [Proceso.Proceso('lector', 2, 2), Proceso.Proceso('lector', 2, 5)],
+            3: [Proceso.Proceso('escritor', 3, 4)],
+            6: [Proceso.Proceso('lector', 6, 2)],
+            8: [Proceso.Proceso('escritor', 8, 1)]
+        }
+        print("Procesos del CSV cargados a la perfección :D\n")
+    except:
+        print("No se pudo realizar la carga de procesos desde el CSV :(\n")
 
 
 def download_finished_process():
@@ -121,47 +102,26 @@ def download_finished_process():
 
 
 def start_simulation():
-    ''''''
-    # TODO: implementar el try catch aca
-
-# try:
-#     # TODO Carga de prueba. Se leerá de un archivo e irá appendeando
-#     procesos = [Proceso.Proceso('lector1', 'lector', 2, 2),
-#                 Proceso.Proceso('lector2', 'lector', 2, 5),
-#                 Proceso.Proceso('escritor1', 'escritor', 3, 4),
-#                 Proceso.Proceso('lector3', 'lector', 6, 2),
-#                 Proceso.Proceso('escritor2', 'escritor', 8, 1)]
-#     max_tiempo_llegada = 8
-#
-#     rindex = 1
-#     windex = 1
-#     for i in range(max_tiempo_llegada + 1):
-#         print("---------- INSTANTE DE TIEMPO: " + str(i) + " ----------")
-#         time.sleep(2)
-#         for proceso in procesos:
-#             if proceso.tiempo_llegada == i:
-#                 if proceso.es_lector():
-#                     t = threading.Thread(target=ejecutar_lector, args=(proceso, rindex,))
-#                     rindex += 1
-#                     t.start()
-#                 else:
-#                     t = threading.Thread(target=ejecutar_escritor, args=(proceso, windex,))
-#                     windex += 1
-#                     t.start()
-# except:
-#     print(str(traceback.format_exc()))
-#     print("Error: unable to start thread")
-
-# lector1 = Proceso.Proceso('lector', 0, 5)
-# escritor1 = Proceso.Proceso('escritor', 1, 2)
-# lector2 = Proceso.Proceso('lector', 1, 1)
-# lector3 = Proceso.Proceso('lector', 2, 2)
-# escritor2 = Proceso.Proceso('escritor', 1, 3)
-#
-# procesos = []
-# procesos.append(lector1)
-# procesos.append(escritor1)
-# procesos.append(lector2)
-# procesos.append(lector3)
-# procesos.append(escritor2)
-# for proceso in procesos:
+    global ready_to_execute
+    global instante
+    try:
+        rindex = 1
+        windex = 1
+        while instante in range(max(ready_to_execute) + 1) or len(threading.enumerate()) > 1:
+            print("---------- INSTANTE DE TIEMPO: " + str(instante) + " ----------")
+            time.sleep(1)
+            if instante in ready_to_execute:
+                for proceso in ready_to_execute[instante]:
+                    if proceso.es_lector():
+                        t = threading.Thread(target=ejecutar_lector, args=(proceso, rindex,))
+                        rindex += 1
+                        t.start()
+                    else:
+                        t = threading.Thread(target=ejecutar_escritor, args=(proceso, windex,))
+                        windex += 1
+                        t.start()
+                    time.sleep(0.15)
+            instante += 1
+        print("\nSimulación finalizada con éxito :D")
+    except:
+        print("No se pudo ejecutar la simulación por el siguiente error: \n" + str(traceback.format_exc()))
