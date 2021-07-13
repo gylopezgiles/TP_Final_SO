@@ -76,13 +76,16 @@ def get_finished_process_list():
 
 def leer_archivo():
     with open(archivo, mode='r') as file:
-        reader = csv.reader(file)
+        reader = csv.reader(file, delimiter=',')
+        next(file)
         for row in reader:
             tipo_proceso = row[0]
             tiempo_llegada = row[1]
             tiempo_ejecucion = row[2]
             add_process_to_queue(
                 tipo_proceso, tiempo_llegada, tiempo_ejecucion)
+            print("tipo proceso: " + tipo_proceso + " tiempo llegada: " +
+                  tiempo_llegada + " tiempo ejecucion: " + tiempo_ejecucion)
 
 
 def add_process_to_queue(tipo_proceso, tiempo_llegada, tiempo_ejecucion):
