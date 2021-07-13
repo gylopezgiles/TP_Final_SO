@@ -37,8 +37,7 @@ class ReadersWritersUI(tk.Tk):
 
     def start_with_process(self):
         lectores_escritores.load_from_csv()
-        self.refresh()
-        self.start_without_process()
+        self.start_simulation()
 
     def start_without_process(self):
         self.show_frame("StartSimulation")
@@ -64,7 +63,7 @@ class ReadersWritersUI(tk.Tk):
         self.show_frame("FinishSimulationPage")
 
     def start_simulation(self):
-        lectores_escritores.analize_start()
+        lectores_escritores.analyze_start()
         self.refresh()
         self.show_frame("FinishSimulationPage")
 
@@ -134,8 +133,8 @@ class SeeQueuePage(tk.Frame):
         tree.configure(yscrollcommand=scroll.set)
 
         for proceso in data:
-            tree.insert('', 'end', values=(proceso.tipo_proceso,
-                                           proceso.tiempo_llegada, proceso.tiempo_ejecucion))
+            tree.insert('', 'end', values=(proceso.process_type,
+                                           proceso.arrival_time, proceso.execution_time))
         button = tk.Button(self, text="Volver",
                            command=lambda: controller.show_frame("StartSimulation"))
         button.pack()
@@ -199,9 +198,9 @@ class FinishSimulationPage(tk.Frame):
         tree.configure(yscrollcommand=scroll.set)
 
         for proceso in data:
-            tree.insert('', 'end', values=(proceso.tipo_proceso, proceso.tiempo_llegada,
-                                           proceso.momento_ejecucion, proceso.tiempo_ejecucion,
-                                           proceso.momento_finalizacion))
+            tree.insert('', 'end', values=(proceso.process_type, proceso.arrival_time,
+                                           proceso.execution_instant, proceso.execution_time,
+                                           proceso.end_instant))
 
         download_button = tk.Button(self, text="Descargar CSV",
                                     command=lambda: controller.download_final_table())
