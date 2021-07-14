@@ -91,8 +91,6 @@ def load_from_csv():
     try:
         with open(process_file) as file:
             reader = csv.reader(file, delimiter=',')
-            if len(next(reader)) != 3:
-                raise ValueError("La cantidad de columnas debe ser 3")
             for process_type, arrival_time, execution_time in reader:
                 print("CARGANDO tipo proceso: " + process_type + " tiempo llegada: " +
                       arrival_time + " tiempo ejecucion: " + execution_time)
