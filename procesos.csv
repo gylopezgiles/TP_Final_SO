@@ -1,5 +1,9 @@
 lector,2,2
 lector,2,5
 escritor,2,4
+escritor,2,5
+lector,3,2
+lector,4,6
+lector,5,8
 lector,6,2
 escritor,8,1
