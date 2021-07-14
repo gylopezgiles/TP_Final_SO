@@ -36,16 +36,26 @@ class ReadersWritersUI(tk.Tk):
         frame.grid()
 
     def start_with_process(self):
+        lectores_escritores.initialize()
         lectores_escritores.load_from_csv()
-        self.start_simulation()
+        self.refresh()
+        self.show_frame("StartSimulation")
 
     def start_without_process(self):
+        lectores_escritores.initialize()
+        self.refresh()
         self.show_frame("StartSimulation")
 
     def add_process(self, process_type, arrival_time, execution_time):
-        lectores_escritores.add_process_to_queue(process_type, arrival_time, execution_time)
-        self.refresh()
-        self.show_frame("StartSimulation")
+        try:
+            if not arrival_time.isdigit() or not execution_time.isdigit() or execution_time == '0':
+                raise ValueError("Los valores del tiempo de llegada y ejecución deben ser números naturales ("
+                                     "incluído el 0 para el caso de llegada)")
+            lectores_escritores.add_process_to_queue(process_type, int(arrival_time), int(execution_time))
+            self.refresh()
+            self.show_frame("StartSimulation")
+        except ValueError as ve:
+            print("No se pudo agregar el proceso por el siguiente motivo: \n" + str(ve))
 
     def download_final_table(self):
         lectores_escritores.download_finished_process()
@@ -152,10 +162,10 @@ class AddProcessPage(tk.Frame):
         tk.Radiobutton(self, text="Lector", padx=20, variable=process_type, value="lector").pack(anchor=tk.W)
         tk.Radiobutton(self, text="Escritor", padx=20, variable=process_type, value="escritor").pack(anchor=tk.W)
         tk.Label(self, text="Tiempo Llegada").pack(anchor=tk.W)
-        arrival_time = tk.IntVar(self, 0)
+        arrival_time = tk.StringVar(self, 0)
         tk.Entry(self, textvariable=arrival_time).pack(anchor=tk.CENTER)
         tk.Label(self, text="Tiempo Ejecucion").pack(anchor=tk.W)
-        execution_time = tk.IntVar(self, 0)
+        execution_time = tk.StringVar(self, 0)
         tk.Entry(self, textvariable=execution_time).pack(anchor=tk.CENTER)
         save_button = tk.Button(self, text="Guardar",
                                 command=lambda: controller.add_process(process_type.get(), arrival_time.get(),
