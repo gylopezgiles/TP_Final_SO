@@ -86,7 +86,7 @@ class StartPage(tk.Frame):
 
         button1 = tk.Button(self, text="Empezar simulacion sin procesos precargados",
                             command=lambda: controller.start_without_process())
-        button2 = tk.Button(self, text="Empezar simulacion con procesos precargados",
+        button2 = tk.Button(self, text="Cargar procesos desde CSV",
                             command=lambda: controller.start_with_process())
         button3 = tk.Button(self, text="Salir",
                             command=lambda: controller.close_window())

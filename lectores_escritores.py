@@ -4,10 +4,11 @@ import traceback
 import Process
 import csv
 import sys
+# import tkinter as tk
+from tkinter import filedialog as fd
 
 global arrival_order, sem_db, mutex_count_readers, count_readers, instant, ready_to_execute, ready_queue
 
-process_file = 'procesos.csv'
 finished_process_file = 'procesos_finalizados.csv'
 arrival_order = threading.Semaphore()
 sem_db = threading.Semaphore()
@@ -89,22 +90,32 @@ def analyze_start():
 def load_from_csv():
     global ready_to_execute
     try:
-        with open(process_file) as file:
-            reader = csv.reader(file, delimiter=',')
-            for process_type, arrival_time, execution_time in reader:
-                print("CARGANDO tipo proceso: " + process_type + " tiempo llegada: " +
-                      arrival_time + " tiempo ejecucion: " + execution_time)
-                if process_type.lower() != "lector" and process_type.lower() != "escritor":
-                    raise ValueError("Los valores del tipo de proceso solo pueden ser 'escritor' o 'lector'")
-                if not arrival_time.isdigit() or not execution_time.isdigit() or execution_time == '0':
-                    raise ValueError("Los valores del tiempo de llegada y ejecución deben ser números naturales ("
-                                     "incluído el 0 para el caso de llegada)")
-                add_process_to_queue(process_type, int(arrival_time), int(execution_time))
-        print("Procesos del CSV cargados a la perfección :D\n")
+        # tk.Tk().withdraw()
+        # El archivo CSV a adjuntar debe tener el mismo formato que procesos_ejemplo.csv
+        process_file = fd.askopenfilename(title="Select file", filetypes=(("CSV Files", "*.csv"),))
+        if process_file:
+            with open(process_file) as file:
+                reader = csv.reader(file, delimiter=',')
+                if len(next(reader)) != 3:
+                    raise ValueError("La cantidad de columnas debe ser 3")
+                for process_type, arrival_time, execution_time in reader:
+                    print("CARGANDO tipo proceso: " + process_type + " tiempo llegada: " +
+                          arrival_time + " tiempo ejecucion: " + execution_time)
+                    if process_type.lower() != "lector" and process_type.lower() != "escritor":
+                        raise ValueError("Los valores del tipo de proceso solo pueden ser 'escritor' o 'lector'")
+                    if not arrival_time.isdigit() or not execution_time.isdigit() or execution_time == '0':
+                        raise ValueError("Los valores del tiempo de llegada y ejecución deben ser números naturales ("
+                                         "incluído el 0 para el caso de llegada)")
+                    add_process_to_queue(process_type, int(arrival_time), int(execution_time))
+            print("Procesos del CSV cargados a la perfección :D\n")
+        else:
+            raise IOError("No se cargó ningun archivo CSV")
     except ValueError as ve:
-        print("No se pudo cargar el CSV por el siguiente motivo: \n" + str(ve))
+        print("No se pudo cargar el CSV completamente por el siguiente motivo: \n" + str(ve))
+    except IOError as io:
+        print("No se pudo cargar el CSV completamente por el siguiente motivo: \n" + str(io))
     except Exception:
-        print("No se pudo cargar el CSV por el siguiente motivo: \n" + str(traceback.format_exc()))
+        print("No se pudo cargar el CSV completamente por el siguiente motivo: \n" + str(traceback.format_exc()))
 
 
 def download_finished_process():
